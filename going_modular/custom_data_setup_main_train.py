@@ -62,7 +62,7 @@ APTOS_train_csv_file = "../APTOS/labels/trainLabels19.csv"
 APTOS_test_image_folder = "../APTOS/resized_test_15"
 APTOS_test_csv_file = "../APTOS/labels/testLabels15.csv"  
 
-NUM_WORKERS = 4
+NUM_WORKERS = 8
 
 class LoadLabels(Dataset):
     def __init__(self, csv_file):

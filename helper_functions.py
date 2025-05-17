@@ -275,15 +275,15 @@ def get_augmentation_train_transforms(num_augs, crop_size):
         ToTensorV2()
     ], seed=33)
 
-def get_augmentation_no_transforms():
+def get_augmentation_no_transforms(crop_size):
     return A.Compose([
-    A.Resize(240, 240),       
+    A.Resize(crop_size, crop_size),       
     A.ToFloat(),
     ToTensorV2()], seed=33)
 
-def get_augmentation_test_transforms(p=1):
+def get_augmentation_test_transforms(crop_size):
     return A.Compose([
-        A.Resize(240, 240),
+        A.Resize(crop_size, crop_size),
 
         A.SomeOf([
             # A.OpticalDistortion(distort_limit=0.3, p=1),

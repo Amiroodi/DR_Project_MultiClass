@@ -32,10 +32,10 @@ class ThreeHeadCNN(nn.Module):
 
         # Classification head
         self.classification_head = nn.Sequential(
-            nn.Linear(512, 128),
+            nn.Linear(512, 64),
             nn.ReLU(),
             nn.Dropout(p=self.p_dropout),
-            nn.Linear(128, 5) # 5 output nodes for classification
+            nn.Linear(64, 5) # 5 output nodes for classification
             )
         
         # Apply He initialization to classification_head
