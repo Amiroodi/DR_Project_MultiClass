@@ -9,6 +9,10 @@ from tqdm.auto import tqdm
 from typing import Dict, List, Tuple
 from torchmetrics.classification import MulticlassF1Score
 from torch.utils.tensorboard import SummaryWriter
+from sklearn.metrics import precision_recall_fscore_support
+from sklearn.metrics import accuracy_score
+from sklearn.metrics import confusion_matrix, ConfusionMatrixDisplay
+import matplotlib.pyplot as plt
 
 
 scalar = torch.amp.GradScaler('cuda', enabled=True)
@@ -24,7 +28,7 @@ def train_step(model: torch.nn.Module,
     model.train()
 
     total_class_loss = 0
-    class_acc = 0
+
     correct = 0
     total = 0
 
@@ -69,7 +73,6 @@ def val_step(model: torch.nn.Module,
     model.eval() 
 
     total_class_loss = 0
-    # class_acc = 0
     correct = 0
     total = 0
 
@@ -91,7 +94,7 @@ def val_step(model: torch.nn.Module,
 
             total_class_loss += loss_classification.item()
             y_pred_class = torch.argmax(torch.softmax(class_out, dim=1), dim=1)
-            # class_acc += (y_pred_class == y).sum().item()/len(y)
+
             total += y.size(0)
             correct += (y_pred_class == y).sum().item()
 
@@ -118,10 +121,6 @@ def test_step(model: torch.nn.Module,
     model.eval() 
 
     total_class_loss = 0
-    class_acc = 0
-    f1_results = {'f1_class': 0}
-    correct = 0
-    total = 0
 
     all_preds = []
     all_targets = []
@@ -142,8 +141,6 @@ def test_step(model: torch.nn.Module,
             total_class_loss += loss_classification.item()
             y_pred_class = torch.argmax(torch.softmax(class_out, dim=1), dim=1)
             # class_acc += (y_pred_class == y).sum().item()/len(y)
-            total += y.size(0)
-            correct += (y_pred_class == y).sum().item()
 
             # Calculate F1 score
             # Batch size should be very big so that F1 score is calculated for all test data
@@ -152,15 +149,11 @@ def test_step(model: torch.nn.Module,
             all_preds.extend(y_pred_class.cpu())
             all_targets.extend(y.cpu())
 
-    calculate_F1_score_multiclass(all_preds, all_targets)
+    calculate_metrics(all_preds, all_targets)
     # print(f'f1_class: {f1_results}')
     
     # Adjust metrics to get average loss and accuracy per batch 
     # class_acc /= len(dataloader) 
-    class_acc = correct / total
-
-    print(f'test class acc: {class_acc}')
-    return class_acc
 
 def train(
     model: torch.nn.Module, 
@@ -189,7 +182,7 @@ def train(
     model.to(device)
 
     # Loop through training and testing steps for a number of epochs
-    for epoch in tqdm(range(epochs)):
+    for epoch in tqdm(range(1, epochs+1)):
         loss_classification_train, acc_classification_train = train_step(
             model=model,
             dataloader=train_dataloader,
@@ -252,7 +245,7 @@ def pre_train(
     model.to(device)
 
     # Loop through training and testing steps for a number of epochs
-    for epoch in tqdm(range(epochs)):
+    for epoch in tqdm(range(1, epochs+1)):
 
         loss_classification_train, acc_classification_train = train_step(
         model=model,
@@ -305,20 +298,35 @@ def calculate_F1_score_multiclass(y_pred_class, y, num_classes=5):
     print(f1_results)
 
 
-# def calculate_F1_score_binary(y_pred_class, y_pred_reg, y_pred_ord, y, num_classes=2):
+def calculate_metrics(y_pred_class, y, num_classes=5):
 
-#     y[y >= 1] = 1
-#     y_pred_class[y_pred_class >= 1] = 1
-#     y_pred_reg[y_pred_reg >= 1] = 1
-#     y_pred_ord[y_pred_ord >= 1] = 1
+    # f1_per_class = MulticlassF1Score(num_classes=num_classes, average='none')  # 'macro', 'micro', or 'weighted', or 'none' for F1 score for each class
+    # f1_macro = MulticlassF1Score(num_classes=num_classes, average='macro')  # 'macro', 'micro', or 'weighted', or 'none' for F1 score for each class
 
-#     f1 = MulticlassF1Score(num_classes=num_classes, average='macro')  # 'macro', 'micro', or 'weighted', or 'none' for F1 score for each class
+    # f1_score_per_class = f1_per_class(torch.tensor(y_pred_class), torch.tensor(y))
+    # f1_score_macro = f1_macro(torch.tensor(y_pred_class), torch.tensor(y))
 
-#     f1_results = {'f1_class': 0, 'f1_reg': 0, 'f1_ord': 0}
+    # for sklearn we should use numpy arrays not torch tensors
+    # for sklearn we should use numpy arrays not torch tensors
+    y_pred_class = torch.tensor(y_pred_class).numpy()
+    y = torch.tensor(y).numpy()
 
-#     f1_results["f1_class"] = f1(y_pred_class, y)
-#     f1_results["f1_reg"] = f1(y_pred_reg, y)
-#     f1_results['f1_ord'] =  f1(y_pred_ord, y)
+    accuracy = accuracy_score(y, y_pred_class)
 
-#     return f1_results
+    precision, recall, f1_score, support = precision_recall_fscore_support(y, y_pred_class, average=None)
+
+    print(f'per class scores: precision: {precision} | recall: {recall} | f1_score: {f1_score}')
+
+    precision, recall, f1_score, support = precision_recall_fscore_support(y, y_pred_class, average='macro')
+
+    print(f'average scores: precision: {precision} | recall: {recall} | f1_score: {f1_score}')
+
+    print(f'accuracy: {accuracy}')
+
+    cm = confusion_matrix(y, y_pred_class)
+    disp = ConfusionMatrixDisplay(confusion_matrix=cm)
+    disp.plot(cmap=plt.cm.Blues)
+    plt.title("Confusion Matrix")
+    plt.show()
+
 

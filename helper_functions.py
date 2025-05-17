@@ -173,6 +173,7 @@ def pred_and_plot_image(
 def plot_t_SNE(
         model: torch.nn.Module,
         dataloader: torch.utils.data.DataLoader,
+        perp_vals = [10],
         NUM_ITER: int = 2000
         ):
     model.eval()  # Set to evaluation mode
@@ -188,7 +189,6 @@ def plot_t_SNE(
     labels = np.concatenate(labels, axis=0)
 
     # Apply t-SNE
-    perp_vals = [10,40]
     for perp in perp_vals:
         tsne = TSNE(n_components=2, perplexity=perp, random_state=45)
         features_2d = tsne.fit_transform(features)
@@ -235,14 +235,14 @@ def get_augmentation_train_transforms(num_augs, crop_size):
 
         A.Resize(crop_size, crop_size),
 
-        A.CenterCrop(
-            height=240,  # Larger than original image height
-            width=240,   # Larger than original image width
-            pad_if_needed=True,
-            border_mode=cv2.BORDER_CONSTANT,
-            fill=0,      # Black padding for image
-            fill_mask=0  # Zero padding for mask
-        ),
+        # A.CenterCrop(
+        #     height=240,  # Larger than original image height
+        #     width=240,   # Larger than original image width
+        #     pad_if_needed=True,
+        #     border_mode=cv2.BORDER_CONSTANT,
+        #     fill=0,      # Black padding for image
+        #     fill_mask=0  # Zero padding for mask
+        # ),
 
         A.SomeOf([
             A.OpticalDistortion(distort_limit=0.3, p=1),
@@ -273,7 +273,7 @@ def get_augmentation_train_transforms(num_augs, crop_size):
         A.Normalize(mean=(0.485, 0.456, 0.406), std=(0.229, 0.224, 0.225)),
         A.ToFloat(),
         ToTensorV2()
-    ])
+    ], seed=33)
 
 def get_augmentation_no_transforms():
     return A.Compose([
@@ -306,4 +306,3 @@ def get_augmentation_test_transforms(p=1):
         A.ToFloat(),
         ToTensorV2()
     ], seed=33)
-
