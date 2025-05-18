@@ -2,12 +2,6 @@ import torch
 import torchvision
 from torch import nn
 
-def reg_classify(x, device):
-    bins = torch.tensor([0.5, 1.5, 2.5, 3.5]).to(device)  # Class boundaries
-    # Classify using bucketize
-    classified = torch.bucketize(x, bins, right=False)  # right=False ensures correct bin placement
-    return classified
-
 class ThreeHeadCNN(nn.Module):
     def __init__(self, device, p_dropout):
         super(ThreeHeadCNN, self).__init__()
@@ -32,10 +26,10 @@ class ThreeHeadCNN(nn.Module):
 
         # Classification head
         self.classification_head = nn.Sequential(
-            nn.Linear(512, 64),
+            nn.Linear(512, 128),
             nn.ReLU(),
             nn.Dropout(p=self.p_dropout),
-            nn.Linear(64, 5) # 5 output nodes for classification
+            nn.Linear(128, 5) # 5 output nodes for classification
             )
         
         # Apply He initialization to classification_head

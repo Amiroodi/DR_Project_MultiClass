@@ -248,7 +248,7 @@ def get_augmentation_train_transforms(num_augs, crop_size):
             A.OpticalDistortion(distort_limit=0.3, p=1),
             A.GridDistortion(num_steps=5, distort_limit=0.3, p=1),
             A.ElasticTransform(alpha=40, sigma=50, p=1),
-            A.Affine(scale=[0.9, 1.3], translate_percent=[-0.05, 0.05], shear=[-6, 6], rotate=[-10, 10], p=1),
+            A.Affine(scale=[1.1, 1.2], translate_percent=[-0.05, 0.05], shear=[-6, 6], rotate=[-10, 10], p=1),
             A.HorizontalFlip(p=1), 
             A.VerticalFlip(p=1), 
             A.RGBShift(r_shift_limit=30, g_shift_limit=30, b_shift_limit=30, p=1),  

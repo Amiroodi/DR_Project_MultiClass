@@ -238,7 +238,7 @@ def pre_train(
     model.to(device)
 
     # Loop through training and testing steps for a number of epochs
-    for epoch in tqdm(range(0, epochs)):
+    for epoch in tqdm(range(1, epochs+1)):
 
         loss_classification_train, acc_classification_train = train_step(
         model=model,
@@ -253,8 +253,6 @@ def pre_train(
         dataloader=val_dataloader,
         loss_fn_classification=loss_fn_classification,
         device=device)
-
-        print(loss_classification_train)
 
         writer.add_scalar('training loss', loss_classification_train, epoch)
 
@@ -275,21 +273,21 @@ def pre_train(
 
     return train_results, val_results
 
-def calculate_F1_score_multiclass(y_pred_class, y, num_classes=5):
+# def calculate_F1_score_multiclass(y_pred_class, y, num_classes=5):
 
-    f1_per_class = MulticlassF1Score(num_classes=num_classes, average='none')  # 'macro', 'micro', or 'weighted', or 'none' for F1 score for each class
-    f1_macro = MulticlassF1Score(num_classes=num_classes, average='macro')  # 'macro', 'micro', or 'weighted', or 'none' for F1 score for each class
+#     f1_per_class = MulticlassF1Score(num_classes=num_classes, average='none')  # 'macro', 'micro', or 'weighted', or 'none' for F1 score for each class
+#     f1_macro = MulticlassF1Score(num_classes=num_classes, average='macro')  # 'macro', 'micro', or 'weighted', or 'none' for F1 score for each class
 
 
-    f1_results = {'f1_class_per_class': 0, 'f1_class_macro': 0}
+#     f1_results = {'f1_class_per_class': 0, 'f1_class_macro': 0}
 
-    # print('y_pred_class', torch.tensor(y_pred_class))
-    # print('y', y)
+#     # print('y_pred_class', torch.tensor(y_pred_class))
+#     # print('y', y)
 
-    f1_results["f1_class_per_class"] = f1_per_class(torch.tensor(y_pred_class), torch.tensor(y))
-    f1_results["f1_class_macro"] = f1_macro(torch.tensor(y_pred_class), torch.tensor(y))
+#     f1_results["f1_class_per_class"] = f1_per_class(torch.tensor(y_pred_class), torch.tensor(y))
+#     f1_results["f1_class_macro"] = f1_macro(torch.tensor(y_pred_class), torch.tensor(y))
 
-    print(f1_results)
+#     print(f1_results)
 
 
 def calculate_metrics(y_pred_class, y, num_classes=5):
