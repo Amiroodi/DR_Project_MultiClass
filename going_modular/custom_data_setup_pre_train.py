@@ -6,7 +6,7 @@ import cv2
 
 APTOS_train_image_folder = "../APTOS/resized_train_15"
 APTOS_train_csv_file = "../APTOS/labels/trainLabels15.csv"  
-# APTOS_train_csv_file = "../APTOS/labels/down.csv"  
+# APTOS_train_csv_file = "../APTOS/labels/down_train_15.csv"  
 
 
 # APTOS_test_image_folder = "../APTOS/resized_test_15"

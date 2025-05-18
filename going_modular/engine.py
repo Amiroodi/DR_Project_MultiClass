@@ -8,13 +8,12 @@ import numpy as np
 from tqdm.auto import tqdm
 from typing import Dict, List, Tuple
 from torchmetrics.classification import MulticlassF1Score
-from torch.utils.tensorboard import SummaryWriter
 from sklearn.metrics import precision_recall_fscore_support
 from sklearn.metrics import accuracy_score
 from sklearn.metrics import confusion_matrix, ConfusionMatrixDisplay
 import matplotlib.pyplot as plt
 from sklearn.metrics import cohen_kappa_score
-
+from torch.utils.tensorboard import SummaryWriter
 
 scalar = torch.amp.GradScaler('cuda', enabled=True)
 
@@ -176,9 +175,6 @@ def train(
         "acc_classification_val": []
         }
     
-    writer = SummaryWriter(log_dir="runs/experiment1")
-
-    
     # Make sure model on target device
     model.to(device)
 
@@ -197,9 +193,6 @@ def train(
             dataloader=val_dataloader,
             loss_fn_classification=loss_fn_classification,
             device=device)
-        
-        writer.add_scalar('training loss', loss_classification_train, epoch)
-
         
         # Print out what's happening
         if epoch % 5 == 0:
@@ -239,14 +232,13 @@ def pre_train(
         "acc_classification_val": []
         }
     
-    writer = SummaryWriter(log_dir="runs/experiment1")
+    writer = SummaryWriter(log_dir='runs/experiment1')  # 'runs/' is the default log directory
 
-    
     # Make sure model on target device
     model.to(device)
 
     # Loop through training and testing steps for a number of epochs
-    for epoch in tqdm(range(1, epochs+1)):
+    for epoch in tqdm(range(0, epochs)):
 
         loss_classification_train, acc_classification_train = train_step(
         model=model,
@@ -262,9 +254,10 @@ def pre_train(
         loss_fn_classification=loss_fn_classification,
         device=device)
 
+        print(loss_classification_train)
+
         writer.add_scalar('training loss', loss_classification_train, epoch)
 
-        
         # Print out what's happening
         if epoch % 4 == 0:
             print(
@@ -324,7 +317,7 @@ def calculate_metrics(y_pred_class, y, num_classes=5):
 
     print(f'accuracy: {accuracy}')
 
-    QWK = cohen_kappa_score(y, y_pred_class)
+    QWK = cohen_kappa_score(y, y_pred_class, weights='quadratic')
 
     print('QWK: ', QWK)
 
