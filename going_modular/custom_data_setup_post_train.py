@@ -1,7 +1,7 @@
 import torch
 from torch.utils.data import Dataset, DataLoader, Subset
 from going_modular import engine_post_train, custom_data_setup_main_train
-from going_modular.ThreeHeadCNN import ThreeHeadCNN
+from going_modular.OneHeadModel import ThreeHeadCNN
 import albumentations as A
 from sklearn.model_selection import KFold
 

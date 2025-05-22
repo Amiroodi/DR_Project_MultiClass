@@ -5,64 +5,25 @@ import albumentations as A
 import cv2
 from sklearn.model_selection import KFold
 from torch.utils.data import ConcatDataset
-from sklearn.model_selection import StratifiedShuffleSplit
-import numpy as np
-
-def crop_image_from_gray(img,tol=7):
-    if img.ndim ==2:
-        mask = img>tol
-        return img[np.ix_(mask.any(1),mask.any(0))]
-    elif img.ndim==3:
-        gray_img = cv2.cvtColor(img, cv2.COLOR_RGB2GRAY)
-        mask = gray_img>tol
-        
-        check_shape = img[:,:,0][np.ix_(mask.any(1),mask.any(0))].shape[0]
-        if (check_shape == 0): # image is too dark so that we crop out everything,
-            return img # return original image
-        else:
-            img1=img[:,:,0][np.ix_(mask.any(1),mask.any(0))]
-            img2=img[:,:,1][np.ix_(mask.any(1),mask.any(0))]
-            img3=img[:,:,2][np.ix_(mask.any(1),mask.any(0))]
-    #         print(img1.shape,img2.shape,img3.shape)
-            img = np.stack([img1,img2,img3],axis=-1)
-    #         print(img.shape)
-        return img
-    
-    
-def circle_crop(img, sigmaX):   
-    """
-    Create circular crop around image centre    
-    """    
-    img = crop_image_from_gray(img)    
-    img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
-    
-    height, width, depth = img.shape    
-    
-    x = int(width/2)
-    y = int(height/2)
-    r = np.amin((x,y))
-    
-    circle_img = np.zeros((height, width), np.uint8)
-    cv2.circle(circle_img, (x,y), int(r), 1, thickness=-1)
-    img = cv2.bitwise_and(img, img, mask=circle_img)
-    img = crop_image_from_gray(img)
-    img=cv2.addWeighted(img,4, cv2.GaussianBlur( img , (0,0) , sigmaX) ,-4 ,128)
-    return img 
+from sklearn.model_selection import train_test_split
 
 
 IDRID_image_folder = "../IDRID/Imagenes/Imagenes" 
 IDRID_csv_file = "../IDRID/idrid_labels.csv"  
 
-MESSIDOR_image_folder = "../MESSIDOR/images"
+MESSIDOR_image_folder = "../MESSIDOR/messidor-2/messidor-2/preprocess"
 MESSIDOR_csv_file = "../MESSIDOR/messidor_data.csv"
 
-APTOS_train_image_folder = "../APTOS/resized_train_19"
-APTOS_train_csv_file = "../APTOS/labels/trainLabels19.csv"  
+APTOS_19_train_image_folder = "../APTOS/resized train 19"
+APTOS_19_train_csv_file = "../APTOS/labels/trainLabels19.csv"  
 
-APTOS_test_image_folder = "../APTOS/resized_test_15"
-APTOS_test_csv_file = "../APTOS/labels/testLabels15.csv"  
+APTOS_15_train_image_folder = "../APTOS/resized train 15"
+APTOS_15_train_csv_file = "../APTOS/labels/trainLabels15.csv" 
 
-NUM_WORKERS = 4
+APTOS_15_test_image_folder = "../APTOS/resized test 15"
+APTOS_15_test_csv_file = "../APTOS/labels/testLabels15.csv"  
+
+NUM_WORKERS = 8
 
 class LoadLabels(Dataset):
     def __init__(self, csv_file):
@@ -89,36 +50,40 @@ class LoadDataset(Dataset):
         img_name = self.df.iloc[idx, 0]  # Assuming first column is filename
         label = self.df.iloc[idx, 1]  # Assuming second column is label (0-4)
 
+        if label >= 1: label = 1.0
+
         # Load image
-        if self.image_folder == MESSIDOR_image_folder:
+        if self.image_folder == MESSIDOR_image_folder: # messidor has the .jpg name in its files
             img_path = os.path.join(self.image_folder, img_name)
         else:
             img_path = os.path.join(self.image_folder, img_name) + '.jpg'
 
         image = cv2.imread(img_path)
         image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
-        # image = circle_crop(image,sigmaX = 30)
-        # image = cv2.addWeighted(image,4, cv2.GaussianBlur(image , (0,0) , 30) ,-4 ,128)
 
-        
         # Apply transformations
         if self.transform:
             image = self.transform(image=image)["image"]
             
         return image, label
     
-def LoadDataset_train_test_split(transform, shrink_size):
-    train_dataset_1 = LoadDataset(IDRID_image_folder, IDRID_csv_file, transform=transform)
-    train_dataset_2 = LoadDataset(MESSIDOR_image_folder, MESSIDOR_csv_file, transform=transform)
-    train_dataset_3 = LoadDataset(APTOS_train_image_folder, APTOS_train_csv_file, transform=transform)
-    combined_dataset = ConcatDataset([train_dataset_1, train_dataset_2, train_dataset_3])
-    # combined_dataset = train_dataset_1
+def LoadDataset_train_val_test_split(transform, shrink_size, train_size=0.7, val_size=0.15, test_size=0.15):
+    train_dataset_1 = LoadDataset(APTOS_19_train_image_folder, APTOS_19_train_csv_file, transform=transform)
+    # train_dataset_2 = LoadDataset(MESSIDOR_image_folder, MESSIDOR_csv_file, transform=transform)
+    # train_dataset_3 = LoadDataset(IDRID_image_folder, IDRID_csv_file, transform=transform)
+
+    # combined_dataset = ConcatDataset([train_dataset_1, train_dataset_2, train_dataset_3])
+    combined_dataset = ConcatDataset([train_dataset_1])
+
 
     # StratifiedShuffleSplit is slow for combined_dataset because augmentations are applied, so we load labels seperately
-    labels_dataset_1 = LoadLabels(IDRID_csv_file)
-    labels_dataset_2 = LoadLabels(MESSIDOR_csv_file)
-    labels_dataset_3 = LoadLabels(APTOS_train_csv_file)
-    combined_labels_dataset = ConcatDataset([labels_dataset_1, labels_dataset_2, labels_dataset_3])
+    labels_dataset_1 = LoadLabels(APTOS_19_train_csv_file)
+    # labels_dataset_2 = LoadLabels(MESSIDOR_csv_file)
+    # labels_dataset_3 = LoadLabels(IDRID_csv_file)
+
+    # combined_labels_dataset = ConcatDataset([labels_dataset_1, labels_dataset_2, labels_dataset_3])
+    combined_labels_dataset = ConcatDataset([labels_dataset_1])
+
     # combined_labels_dataset = labels_dataset_1
 
     # Shrinking dataset size for test purposes
@@ -128,21 +93,32 @@ def LoadDataset_train_test_split(transform, shrink_size):
 
     labels = [combined_labels_dataset[i] for i in range(len(combined_labels_dataset))]  # assuming (image, label)
 
-    splitter = StratifiedShuffleSplit(n_splits=1, test_size=0.2, random_state=42)
-    train_idx, test_idx = next(splitter.split(range(len(combined_dataset)), labels))
+    # Step 3: Create stratified train, validation, and test splits
+    # First, split into train and temp (val + test)
+    train_idx, temp_idx, train_labels, temp_labels = train_test_split(
+        range(len(combined_dataset)),
+        labels,
+        train_size=train_size,
+        stratify=labels,
+        random_state=33
+    )
 
-    # print('train_idx: ', train_idx)
-    # print('test_idx: ', test_idx)
+    # Adjust val_size for the second split (val_size / (val_size + test_size))
+    relative_val_size = val_size / (val_size + test_size)
+    val_idx, test_idx, _, _ = train_test_split(
+        temp_idx,
+        temp_labels,
+        train_size=relative_val_size,
+        stratify=temp_labels,
+        random_state=33
+    )
 
+    # Step 4: Create Subset datasets for train, validation, and test
     train_dataset = Subset(combined_dataset, train_idx)
+    val_dataset = Subset(combined_dataset, val_idx)
     test_dataset = Subset(combined_dataset, test_idx)
 
-    # for i in range(len(train_dataset)):
-    #     print('train label is: ', train_dataset[i][1])
-    # for i in range(len(test_dataset)):
-    #     print('test label is: ', test_dataset[i][1])
-
-    return train_dataset, test_dataset
+    return train_dataset, val_dataset, test_dataset
 
 def create_train_val_dataloader(
     train_transform,
@@ -153,36 +129,16 @@ def create_train_val_dataloader(
     ):
   
     # minimum augmentations should be applied to val_dataset, not the case for train_dataset
-    train_dataset, _ = LoadDataset_train_test_split(transform=train_transform, shrink_size=shrink_size)
-    val_dataset, _ = LoadDataset_train_test_split(transform=val_transform, shrink_size=shrink_size)
+    train_dataset, _, _ = LoadDataset_train_val_test_split(transform=train_transform, shrink_size=shrink_size)
+    _, val_dataset, _ = LoadDataset_train_val_test_split(transform=val_transform, shrink_size=shrink_size)
 
-    # for i in range(len(train_dataset)):
-    #     print('train: ', train_dataset[i][1])
-    #     print('val: ', val_dataset[i][1])
-
-    train_val_dataloader = []
-
-    k_folds = 5
-    kf = KFold(n_splits=k_folds, shuffle=True, random_state=42)
-
-    # train_idx and val_idx are indexes of selected items in train_dataset
-    for fold, (train_idx, val_idx) in enumerate(kf.split(train_dataset)):
-        train_subset = Subset(train_dataset, train_idx)
-        val_subset = Subset(val_dataset, val_idx)
-
-        train_dataloader = DataLoader(train_subset, batch_size=batch_size, shuffle=True, num_workers=NUM_WORKERS, persistent_workers=True, pin_memory=True)
-        val_dataloader = DataLoader(val_subset, batch_size=batch_size, shuffle=True, num_workers=NUM_WORKERS, persistent_workers=True, pin_memory=True)
-
-        fold = {
-                'train_dataloader': train_dataloader,
-                'val_dataloader': val_dataloader
-               }
-        train_val_dataloader.append(fold)
+    train_dataloader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True, num_workers=NUM_WORKERS, persistent_workers=True, pin_memory=True)
+    val_dataloader = DataLoader(val_dataset, batch_size=batch_size, shuffle=True, num_workers=NUM_WORKERS, persistent_workers=True, pin_memory=True)
 
     # Get class names
-    class_names = ['No DR', 'Mild DR', 'Moderate DR', 'Severe DR', 'Proliferative DR']
+    class_names = ['No DR', 'DR']
 
-    return train_val_dataloader, class_names
+    return train_dataloader, val_dataloader, class_names
 
 def create_test_dataloader(
     test_transform,
@@ -191,10 +147,32 @@ def create_test_dataloader(
     num_workers: int=NUM_WORKERS,
     ):
   
-    _, test_dataset = LoadDataset_train_test_split(transform=test_transform, shrink_size=shrink_size)
+    _, _, test_dataset = LoadDataset_train_val_test_split(transform=test_transform, shrink_size=shrink_size)
 
     # Get class names
-    class_names = ['No DR', 'Mild DR', 'Moderate DR', 'Severe DR', 'Proliferative DR']
+    class_names = ['No DR', 'DR']
+
+    test_dataloader = DataLoader(test_dataset, batch_size=batch_size, shuffle=False, num_workers=NUM_WORKERS, persistent_workers=True, pin_memory=True)
+
+    return test_dataloader, class_names
+
+
+def create_exotic_test_dataloader(
+    test_transform,
+    batch_size: int,
+    shrink_size, 
+    dataset_name,
+    num_workers: int=NUM_WORKERS,
+    ):
+  
+    if dataset_name == 'MESSIDOR':
+        test_dataset = LoadDataset(MESSIDOR_image_folder, MESSIDOR_csv_file, transform=test_transform)
+    if dataset_name == "IDRID":
+        test_dataset = LoadDataset(IDRID_image_folder, IDRID_csv_file, transform=test_transform)
+    if dataset_name == 'APTOS_15_test':
+        test_dataset = LoadDataset(APTOS_15_test_image_folder, APTOS_15_test_csv_file, transform=test_transform)
+    # Get class names
+    class_names = ['No DR', 'DR']
 
     test_dataloader = DataLoader(test_dataset, batch_size=batch_size, shuffle=False, num_workers=NUM_WORKERS, persistent_workers=True, pin_memory=True)
 
@@ -207,11 +185,11 @@ def create_train_dataloader(
     num_workers: int=NUM_WORKERS,
     ):
     
-    train_dataset, _ = LoadDataset_train_test_split(transform=train_transform, shrink_size=shrink_size)
+    train_dataset, _, _ = LoadDataset_train_val_test_split(transform=train_transform, shrink_size=shrink_size)
 
     # Get class names
-    class_names = ['No DR', 'Mild DR', 'Moderate DR', 'Severe DR', 'Proliferative DR']
+    class_names = ['No DR', 'DR']
 
-    train_dataloader = DataLoader(train_dataset, batch_size=batch_size, shuffle=False, num_workers=NUM_WORKERS, persistent_workers=False, pin_memory=True)
+    train_dataloader = DataLoader(train_dataset, batch_size=batch_size, shuffle=False, num_workers=NUM_WORKERS, persistent_workers=True, pin_memory=True)
 
     return train_dataloader, class_names
