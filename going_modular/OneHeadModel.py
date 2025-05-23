@@ -2,9 +2,9 @@ import torch
 import torchvision
 from torch import nn
 
-class ThreeHeadCNN(nn.Module):
+class OneHeadModel(nn.Module):
     def __init__(self, device, p_dropout):
-        super(ThreeHeadCNN, self).__init__()
+        super(OneHeadModel, self).__init__()
 
         self.device = device
         self.p_dropout = p_dropout
@@ -67,7 +67,7 @@ class ThreeHeadCNN(nn.Module):
         enc_out = x
 
         # Classification branch
-        class_out = self.classification_head(x)
+        class_out = self.classification_head(x).float()
 
         return class_out, enc_out
 

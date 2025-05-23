@@ -39,11 +39,11 @@ def train_step(model: torch.nn.Module,
         # Send data to target device
         X, y = X.to(device), y.to(device)
 
-        with torch.autocast(device_type=device, dtype=torch.float16, enabled=True):
+        with torch.autocast(device_type=device, enabled=True):
 
             class_out, enc_out= model(X)
 
-            loss_classification = loss_fn_classification(class_out.float(), y.float())
+            loss_classification = loss_fn_classification(class_out, y)
     
         scalar.scale(loss_classification).backward()
         scalar.step(optimizer)
@@ -85,7 +85,7 @@ def val_step(model: torch.nn.Module,
             class_out, enc_out = model(X)
         
             # 2. Calculate and accumulate loss
-            loss_classification = loss_fn_classification(class_out.float(), y.float())
+            loss_classification = loss_fn_classification(class_out, y)
                 
             total_class_loss += loss_classification.item()
             y_pred_class = torch.argmax(torch.softmax(class_out, dim=1), dim=1)
@@ -211,7 +211,7 @@ def calculate_metrics(y_pred_class, y):
 
     print('QWK: ', QWK)
 
-    cm = confusion_matrix(y, y_pred_class, normalize='all')
+    cm = confusion_matrix(y, y_pred_class)
     disp = ConfusionMatrixDisplay(confusion_matrix=cm)
     disp.plot(cmap=plt.cm.Blues)
     plt.title("Confusion Matrix")

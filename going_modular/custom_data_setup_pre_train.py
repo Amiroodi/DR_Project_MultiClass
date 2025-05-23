@@ -4,15 +4,15 @@ from torch.utils.data import Dataset, DataLoader, Subset
 import albumentations as A
 import cv2
 
-APTOS_train_image_folder = "../APTOS/resized train 15"
-APTOS_train_csv_file = "../APTOS/labels/trainLabels15.csv"  
-# APTOS_train_csv_file = "../APTOS/labels/down_train_15.csv"  
+APTOS_train_image_folder = "../APTOS/resized_train_15"
+# APTOS_train_csv_file = "../APTOS/labels/trainLabels15.csv"  
+APTOS_train_csv_file = "../APTOS/labels/down_train_15.csv"  
 
 
-# APTOS_test_image_folder = "../APTOS/resized test 15"
+# APTOS_test_image_folder = "../APTOS/resized_test_15"
 # APTOS_test_csv_file = "../APTOS/labels/testLabels15.csv"  
 
-APTOS_test_image_folder = "../APTOS/resized train 19"
+APTOS_test_image_folder = "../APTOS/resized_train_19"
 APTOS_test_csv_file = "../APTOS/labels/trainLabels19.csv" 
 
 NUM_WORKERS = 8
@@ -31,8 +31,6 @@ class LoadDataset(Dataset):
         img_name = self.df.iloc[idx, 0]  # Assuming first column is filename
         label = self.df.iloc[idx, 1]  # Assuming second column is label (0-4)
         
-        if label >=1: label = 1.0
-
         # Load image
         img_path = os.path.join(self.image_folder, img_name) + '.jpg'
         image = cv2.imread(img_path)

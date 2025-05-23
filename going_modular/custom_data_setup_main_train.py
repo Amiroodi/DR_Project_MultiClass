@@ -14,13 +14,13 @@ IDRID_csv_file = "../IDRID/idrid_labels.csv"
 MESSIDOR_image_folder = "../MESSIDOR/messidor-2/messidor-2/preprocess"
 MESSIDOR_csv_file = "../MESSIDOR/messidor_data.csv"
 
-APTOS_19_train_image_folder = "../APTOS/resized train 19"
+APTOS_19_train_image_folder = "../APTOS/resized_train_19"
 APTOS_19_train_csv_file = "../APTOS/labels/trainLabels19.csv"  
 
-APTOS_15_train_image_folder = "../APTOS/resized train 15"
+APTOS_15_train_image_folder = "../APTOS/resized_train_15"
 APTOS_15_train_csv_file = "../APTOS/labels/trainLabels15.csv" 
 
-APTOS_15_test_image_folder = "../APTOS/resized test 15"
+APTOS_15_test_image_folder = "../APTOS/resized_test_15"
 APTOS_15_test_csv_file = "../APTOS/labels/testLabels15.csv"  
 
 NUM_WORKERS = 8
@@ -49,8 +49,6 @@ class LoadDataset(Dataset):
         # Get image filename and label from the DataFrame
         img_name = self.df.iloc[idx, 0]  # Assuming first column is filename
         label = self.df.iloc[idx, 1]  # Assuming second column is label (0-4)
-
-        if label >= 1: label = 1.0
 
         # Load image
         if self.image_folder == MESSIDOR_image_folder: # messidor has the .jpg name in its files
