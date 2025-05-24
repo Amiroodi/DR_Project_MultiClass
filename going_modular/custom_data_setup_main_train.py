@@ -14,16 +14,16 @@ IDRID_csv_file = "../IDRID/idrid_labels.csv"
 MESSIDOR_image_folder = "../MESSIDOR/messidor-2/messidor-2/preprocess"
 MESSIDOR_csv_file = "../MESSIDOR/messidor_data.csv"
 
-APTOS_19_train_image_folder = "../APTOS/resized_train_19"
+APTOS_19_train_image_folder = "../APTOS/resized train 19"
 APTOS_19_train_csv_file = "../APTOS/labels/trainLabels19.csv"  
 
-APTOS_15_train_image_folder = "../APTOS/resized_train_15"
+APTOS_15_train_image_folder = "../APTOS/resized train 15"
 APTOS_15_train_csv_file = "../APTOS/labels/trainLabels15.csv" 
 
-APTOS_15_test_image_folder = "../APTOS/resized_test_15"
+APTOS_15_test_image_folder = "../APTOS/resized test 15"
 APTOS_15_test_csv_file = "../APTOS/labels/testLabels15.csv"  
 
-NUM_WORKERS = 8
+NUM_WORKERS = 0
 
 class LoadLabels(Dataset):
     def __init__(self, csv_file):
@@ -130,8 +130,8 @@ def create_train_val_dataloader(
     train_dataset, _, _ = LoadDataset_train_val_test_split(transform=train_transform, shrink_size=shrink_size)
     _, val_dataset, _ = LoadDataset_train_val_test_split(transform=val_transform, shrink_size=shrink_size)
 
-    train_dataloader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True, num_workers=NUM_WORKERS, persistent_workers=True, pin_memory=True)
-    val_dataloader = DataLoader(val_dataset, batch_size=batch_size, shuffle=True, num_workers=NUM_WORKERS, persistent_workers=True, pin_memory=True)
+    train_dataloader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True, num_workers=NUM_WORKERS, persistent_workers=False, pin_memory=True)
+    val_dataloader = DataLoader(val_dataset, batch_size=batch_size, shuffle=True, num_workers=NUM_WORKERS, persistent_workers=False, pin_memory=True)
 
     # Get class names
     class_names = ['No DR', 'DR']
@@ -150,7 +150,7 @@ def create_test_dataloader(
     # Get class names
     class_names = ['No DR', 'DR']
 
-    test_dataloader = DataLoader(test_dataset, batch_size=batch_size, shuffle=False, num_workers=NUM_WORKERS, persistent_workers=True, pin_memory=True)
+    test_dataloader = DataLoader(test_dataset, batch_size=batch_size, shuffle=False, num_workers=NUM_WORKERS, persistent_workers=False, pin_memory=True)
 
     return test_dataloader, class_names
 
@@ -172,7 +172,7 @@ def create_exotic_test_dataloader(
     # Get class names
     class_names = ['No DR', 'DR']
 
-    test_dataloader = DataLoader(test_dataset, batch_size=batch_size, shuffle=False, num_workers=NUM_WORKERS, persistent_workers=True, pin_memory=True)
+    test_dataloader = DataLoader(test_dataset, batch_size=batch_size, shuffle=False, num_workers=NUM_WORKERS, persistent_workers=False, pin_memory=True)
 
     return test_dataloader, class_names
 
@@ -188,6 +188,6 @@ def create_train_dataloader(
     # Get class names
     class_names = ['No DR', 'DR']
 
-    train_dataloader = DataLoader(train_dataset, batch_size=batch_size, shuffle=False, num_workers=NUM_WORKERS, persistent_workers=True, pin_memory=True)
+    train_dataloader = DataLoader(train_dataset, batch_size=batch_size, shuffle=False, num_workers=NUM_WORKERS, persistent_workers=False, pin_memory=True)
 
     return train_dataloader, class_names

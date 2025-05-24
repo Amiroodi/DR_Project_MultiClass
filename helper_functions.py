@@ -137,6 +137,7 @@ def get_augmentation_train_transforms(num_augs, crop_size):
             A.CoarseDropout(num_holes_range=(1, 2), hole_height_range=(0.1, 0.2), hole_width_range=(0.1, 0.2), fill=0, fill_mask=None, p=1),
             ], n=num_augs, p=1),
 
+        A.CLAHE(clip_limit=(1, 4), tile_grid_size=(8, 8), p=1.0),
         A.Normalize(mean=(0.485, 0.456, 0.406), std=(0.229, 0.224, 0.225)),
         A.ToFloat(),
         ToTensorV2()
@@ -169,6 +170,7 @@ def get_augmentation_test_transforms(crop_size):
             # A.CoarseDropout(num_holes_range=(1, 2), hole_height_range=(0.1, 0.2), hole_width_range=(0.1, 0.2), fill=0, fill_mask=None, p=1),
             ], n=0, p=1),
 
+        A.CLAHE(clip_limit=(1, 4), tile_grid_size=(8, 8), p=1.0),
         A.Normalize(mean=(0.485, 0.456, 0.406), std=(0.229, 0.224, 0.225)),
         A.ToFloat(),
         ToTensorV2()

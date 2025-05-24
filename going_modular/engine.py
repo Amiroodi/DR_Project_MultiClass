@@ -167,7 +167,7 @@ def train(
             loss_fn_classification=loss_fn_classification,
             device=device)
         
-        scheduler.step()
+        scheduler.step(loss_classification_val)
         print(f"\nEpoch {epoch}, Learning Rate: {scheduler.get_last_lr()[0]}")
         
         # Print out what's happening

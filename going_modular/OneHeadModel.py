@@ -9,9 +9,14 @@ class OneHeadModel(nn.Module):
         self.device = device
         self.p_dropout = p_dropout
 
+        # weights = torchvision.models.ResNeXt50_32X4D_Weights.DEFAULT
+        # model = torchvision.models.resnext50_32x4d(weights=weights)
+        # model = torch.nn.Sequential(*(list(model.children())[:-2])) # remove last two layers
+        # self.encoder = model
+
         # Load EfficientNet encoder
-        weights = torchvision.models.EfficientNet_B4_Weights.DEFAULT
-        efficientNet = torchvision.models.efficientnet_b4(weights=weights)
+        weights = torchvision.models.EfficientNet_B1_Weights.DEFAULT
+        efficientNet = torchvision.models.efficientnet_b1(weights=weights)
         self.encoder = efficientNet.features
 
         # Pooling layers
@@ -19,10 +24,14 @@ class OneHeadModel(nn.Module):
         self.global_avg_pool = nn.AdaptiveAvgPool2d(1)
 
         # Fully connected layers
-        self.batch_norm_1= nn.BatchNorm1d(1792) 
-        self.batch_norm_2= nn.BatchNorm1d(1792)
+        self.batch_norm_1= nn.BatchNorm1d(1280) 
+        self.batch_norm_2= nn.BatchNorm1d(1280)
 
-        self.dense1 = nn.Linear(1792 * 2, 512)
+        self.dense1 = nn.Sequential(
+            nn.Linear(1280 * 2, 512),
+            nn.ReLU(),
+            nn.Dropout(p=self.p_dropout)
+        )
 
         # Classification head
         self.classification_head = nn.Sequential(
@@ -37,10 +46,13 @@ class OneHeadModel(nn.Module):
         
     def _initialize_weights(self):
         
-        # Initialize dense1
-        nn.init.kaiming_normal_(self.dense1.weight, mode='fan_in', nonlinearity='relu')
-        if self.dense1.bias is not None:
-            nn.init.zeros_(self.dense1.bias)
+        for module in self.dense1:
+            if isinstance(module, nn.Linear):
+                # Apply He initialization to weights
+                nn.init.kaiming_normal_(module.weight, mode='fan_in', nonlinearity='relu')
+                # Initialize biases to zero (optional, common practice)
+                if module.bias is not None:
+                    nn.init.zeros_(module.bias)
 
         for module in self.classification_head:
             if isinstance(module, nn.Linear):
@@ -60,11 +72,10 @@ class OneHeadModel(nn.Module):
         # Concatenate
         x1 = self.batch_norm_1(max_pooled)
         x2 = self.batch_norm_2(avg_pooled)
-        x = torch.concat([x1, x2], dim=1)
-        x = torch.relu(self.dense1(x))
 
         # enc_out for visualizing data with t-SNE
-        enc_out = x
+        enc_out = torch.concat([x1, x2], dim=1)
+        x = self.dense1(enc_out)
 
         # Classification branch
         class_out = self.classification_head(x).float()
