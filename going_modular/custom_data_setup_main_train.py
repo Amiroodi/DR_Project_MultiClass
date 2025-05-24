@@ -23,7 +23,7 @@ APTOS_15_train_csv_file = "../APTOS/labels/trainLabels15.csv"
 APTOS_15_test_image_folder = "../APTOS/resized test 15"
 APTOS_15_test_csv_file = "../APTOS/labels/testLabels15.csv"  
 
-NUM_WORKERS = 0
+NUM_WORKERS = 8
 
 class LoadLabels(Dataset):
     def __init__(self, csv_file):
@@ -130,8 +130,8 @@ def create_train_val_dataloader(
     train_dataset, _, _ = LoadDataset_train_val_test_split(transform=train_transform, shrink_size=shrink_size)
     _, val_dataset, _ = LoadDataset_train_val_test_split(transform=val_transform, shrink_size=shrink_size)
 
-    train_dataloader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True, num_workers=NUM_WORKERS, persistent_workers=False, pin_memory=True)
-    val_dataloader = DataLoader(val_dataset, batch_size=batch_size, shuffle=True, num_workers=NUM_WORKERS, persistent_workers=False, pin_memory=True)
+    train_dataloader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True, num_workers=NUM_WORKERS, persistent_workers=True, pin_memory=True)
+    val_dataloader = DataLoader(val_dataset, batch_size=batch_size, shuffle=True, num_workers=NUM_WORKERS, persistent_workers=True, pin_memory=True)
 
     # Get class names
     class_names = ['No DR', 'DR']
@@ -150,7 +150,7 @@ def create_test_dataloader(
     # Get class names
     class_names = ['No DR', 'DR']
 
-    test_dataloader = DataLoader(test_dataset, batch_size=batch_size, shuffle=False, num_workers=NUM_WORKERS, persistent_workers=False, pin_memory=True)
+    test_dataloader = DataLoader(test_dataset, batch_size=batch_size, shuffle=False, num_workers=NUM_WORKERS, persistent_workers=True, pin_memory=True)
 
     return test_dataloader, class_names
 
@@ -172,7 +172,7 @@ def create_exotic_test_dataloader(
     # Get class names
     class_names = ['No DR', 'DR']
 
-    test_dataloader = DataLoader(test_dataset, batch_size=batch_size, shuffle=False, num_workers=NUM_WORKERS, persistent_workers=False, pin_memory=True)
+    test_dataloader = DataLoader(test_dataset, batch_size=batch_size, shuffle=False, num_workers=NUM_WORKERS, persistent_workers=True, pin_memory=True)
 
     return test_dataloader, class_names
 
